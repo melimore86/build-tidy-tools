@@ -1,0 +1,227 @@
+# Object-oriented programming
+
+* Base types - `typeof()`
+* S3 - simplest system of OOP. Adding attributes to an object.
+  The most important attribute `class`
+* S4 - robust, but much more complicated, and unless you're working with Bioconductor. Don't use until there's a good book about it.
+* R6 - very different to S3/S4, it's much more like OOP in python or javascript, or basically any other popular programming language of the last 20 years (apart from Julia). Powers reticulate. Useful in various places in Shiny. Avoided unless you really need it.
+
+Five chapters: <https://adv-r.hadley.nz>.
+
+## S3
+
+The simplest thing that might possibly work. Built on top of regular R objects (atomic vectors, lists, functions, ...).
+
+```{r}
+df <- data.frame()
+f <- factor()
+mod <- lm(mpg ~ cyl, data = mtcars)
+
+# You are already working with S3 objects
+sloop::otype(df)
+sloop::otype(f)
+sloop::otype(mod)
+sloop::otype(1:30)
+sloop::otype(tibble::tibble())
+
+# S3 object are built on base types
+typeof(tibble::tibble())
+typeof(df)
+typeof(f)
+typeof(mod)
+
+# With additional attributes including class
+attributes(df)
+attributes(tibble::tibble())
+attributes(f)
+attributes(mod)
+```
+
+## Why are S3 objects useful?
+
+Behaviour of a function can depend on the class:
+```{r}
+x <- factor(1:10)
+class(x)
+typeof(x)
+print(x)
+
+class(x) <- "Date"
+print(x)
+```
+
+* `print()` is called a **generic function** = interface
+* specific function is called **method** = implementation
+
+To find out if a function is a generic: `sloop::ftype()`. 
+
+The name of a method is just `{generic}.{class}`, and this is usually what you need to find help.
+
+The details can get a bit more complicated so you can use `sloop::s3_dispatch()` to find it:
+
+```{r}
+library(sloop)
+s3_dispatch(print(ordered(1:3)))
+```
+
+Then `s3_get_method()` to find the implementation.
+
+**Your turn**: Find the implementation of print for factors, numerics, and dates.
+
+```{r}
+s3_get_method(print.Date)
+s3_get_method(print.POSIXct)
+s3_get_method(print.factor)
+```
+
+## Create a new class by adding the class attribute
+
+```{r}
+new_foo <- function() {
+  x <- list()
+  class(x) <- "foo"
+  x
+}
+y <- new_foo()
+sloop::s3_dispatch(print(y))
+```
+
+Best practices at: https://adv-r.hadley.nz/s3.html#s3-classes
+
+## Create a new method by creating a function with a special name
+
+`{generic}.{class}`   
+Arguments much match generic.
+
+```{r}
+print.foo <- function(x, ...) {
+  cat("Hello!\n")
+  invisible(x)
+}
+sloop::s3_dispatch(print(y))
+print(y)
+y
+```
+
+## Creating new generics
+
+We want a `bizarro()` function, that takes input and "bizarros" it:
+```{r}
+bizarro("abc")
+#> [1] "cba"
+
+bizarro(1)
+#> [1] -1
+
+bizarro(c(TRUE, FALSE))
+#> [1] FALSE TRUE
+```
+
+```{r}
+str_reverse <- function(x) {
+  purrr::map_chr(stringr::str_split(x, ""), 
+    ~ stringr::str_flatten(rev(.x))  
+  )
+}
+```
+
+Without a generic, `bizzaro()` function needs a ton of `if` clauses:
+```{r}
+bizarro <- function(x) {
+  if (is.character(x)) {
+    str_reverse(x)
+  } else if (is.numeric(x)) {
+    -x
+  } else if (is.logical(x)) {
+    !x
+  } else {
+    stop(
+      "Don't know how to make bizzaro <", class(x)[[1]], ">", 
+      call. = FALSE)
+  }
+}
+```
+
+Much better to create a `bizzaro` generic, then implement methods:
+
+* `create_package("~/desktop/bizzaro")`
+* `use_mit_license()`
+* `use_r("bizarro")`
+
+```{r}
+#' @export
+bizarro <- function(x) {
+  # This uses magic to pass arguments to the right method
+  UseMethod("bizarro")
+}
+
+#' @export
+bizarro.character <- function(x) {
+  str_reverse(x)
+}
+
+str_reverse <- function(x) {
+  purrr::map_chr(stringr::str_split(x, ""), 
+    ~ stringr::str_flatten(rev(.x))  
+  )
+}
+```
+
+**Your turn**: Add:
+* a numeric method that multiplies by -1
+* a logical method which inverts TRUE/FALSE
+* a data frame method that bizarros the column names, as well as each column.
+
+Finish that? Write some documentation and some basic tests. Get check passing.
+
+---
+
+```{r}
+bizarro.default <- function(x) {
+  stop(
+   "Don't know how to make bizzaro <", 
+   class(x)[[1]], ">", 
+   call. = FALSE 
+  )
+}
+```
+
+```{r}
+#' @export
+bizarro.numeric <- function(x) {
+  -x
+}
+```
+
+```{r}
+#' @export
+bizarro.data.frame <- function(x) {
+  x[] <- purrr::map(x, bizarro)
+  setNames(x, bizarro(names(x)))
+}
+```
+
+---
+
+**Your turn**: Add a method for factors. You can use this test if you want.
+
+```{r}
+test_that("bizarro factors have levels reversed", {
+  f1 <- factor(c("abc", "def", "abc"))
+  f2 <- factor(c("cba", "fed", "cba"))
+
+  expect_equal(bizarro(f1), f2)
+  expect_equal(bizarro(f2), f1)
+})
+```
+
+---
+
+```{r}
+#' @export
+bizarro.factor <- function(x) {
+  levels(x) <- bizarro(levels(x))
+  x
+}
+```
+

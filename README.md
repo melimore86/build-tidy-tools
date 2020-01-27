@@ -12,9 +12,55 @@ by Charlotte Wickham and Hadley Wickham
 :spiral\_calendar: January 27 and 28, 2020  
 :alarm\_clock: 09:00 - 17:00  
 :hotel: Plaza A (Lobby Level)  
-:writing\_hand: [rstd.io/build-tt](http://rstd.io/build-tt)
+:writing\_hand:
+[rstd.io/build-tt](http://rstd.io/build-tt)
 
 -----
+
+## Setup
+
+<!-- Fix later to generate from content of repo like https://github.com/hadley/tidy-tools/blob/master/README.Rmd -->
+
+Please make sure you’ve installed the following packages:
+
+``` r
+install.packages("devtools")
+install.packages(c("fs", "glue", "lobstr", "rematch2", "sloop", "vctrs"))
+devtools::install_github("r-lib/itdepends")
+```
+
+``` r
+# You may also need:
+install.packages(c("ggplot2", "dplyr", "stringr"))
+
+# And get the package we'll work with later:
+usethis::create_from_github("hadley/fordogs", fork = FALSE)
+
+# if you see an error about "unsupported protocol", try this:
+usethis::create_from_github("hadley/fordogs", fork = FALSE, protocol = "https")
+```
+
+<!-- 
+* When you're done, put a green post-it on your computer. 
+* If you need help, put up a pink post-it.
+-->
+
+If you’re all set, you might like to download the first set of slides.
+
+## Slides
+
+  - [Introduction and “The Whole Game”](1-intro.pdf)
+  - [Unit Tests](2-testing.pdf)
+  - [Documentation and Sharing](3-sharing.pdf)
+
+## Code
+
+Find our live coded notes in [`notes/`](notes/) as we commit them.
+
+You can see the scripts we’ll work from in [`script/`](script/), but we
+recommend not reading too far ahead because you’ll find answers to some
+of the exercises, and you’ll learn more if you try to work through them
+first.
 
 ## Questions?
 
@@ -69,45 +115,17 @@ The materials will evolve as the workshop approaches, so if you want to
 pre-download the materials, please wait until the day before the
 workshop.
 
-## Setup
-
-<!-- Fix later to generate from content of repo like https://github.com/hadley/tidy-tools/blob/master/README.Rmd -->
-
-Please make sure you’ve installed the following packages:
-
-``` r
-install.packages("devtools")
-install.packages(c("fs", "glue", "lobstr", "rematch2", "sloop", "vctrs"))
-devtools::install_github("r-lib/itdepends")
-```
-
-``` r
-# You may also need:
-install.packages(c("ggplot2", "dplyr", "stringr"))
-
-# And get the package we'll work with later:
-usethis::create_from_github("hadley/fordogs", fork = FALSE)
-
-# if you see an error about "unsupported protocol", try this:
-usethis::create_from_github("hadley/fordogs", fork = FALSE, protocol = "https")
-```
-
-<!-- 
-* When you're done, put a green post-it on your computer. 
-* If you need help, put up a pink post-it.
--->
-
 ## Schedule
 
-| Time          | Activity       |
-| :------------ | :------------- |
-| 09:00 - 10:30 | Session 1      |
-| 10:30 - 11:00 | *Coffee break* |
-| 11:00 - 12:30 | Session 2      |
-| 12:30 - 13:30 | *Lunch break*  |
-| 13:30 - 15:00 | Session 3      |
-| 15:00 - 15:30 | *Coffee break* |
-| 15:30 - 17:00 | Session 4      |
+| Time          | Day One                                       | Day Two                                         |
+| :------------ | :-------------------------------------------- | :---------------------------------------------- |
+| 09:00 - 10:30 | **Introduction / The Whole Game** (Charlotte) | **Using the tidyverse in packages** (Charlotte) |
+| 10:30 - 11:00 | *Coffee break*                                | *Coffee break*                                  |
+| 11:00 - 12:30 | **Testing** (Charlotte)                       | **Interface** (Hadley)                          |
+| 12:30 - 13:30 | *Lunch break*                                 | *Lunch break*                                   |
+| 13:30 - 15:00 | **Documentation / Sharing** (Charlotte)       | **Types** (Hadley)                              |
+| 15:00 - 15:30 | *Coffee break*                                | *Coffee break*                                  |
+| 15:30 - 17:00 | **Dependencies** (Hadley)                     | **OO programming / S3** (Charlotte)             |
 
 ## Instructors
 
