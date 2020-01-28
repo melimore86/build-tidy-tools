@@ -1,0 +1,147 @@
+---
+title: "tidy tools"
+author: "Mel Moreno"
+date: "January 27, 2020"
+output: html_document
+---
+
+
+```{r}
+x <- 1
+f <- function() {
+  y <- 2
+  z <- 2
+  g <- function() {
+    z <- 3
+    c(x, y, z)
+  }
+  g()
+}
+f()
+
+#lexical scoping, if R can't find it in the current environement it will look where it is defined
+```
+
+* What's an environment?
+heiarchy- every environment has a parent
+
+names-mapping names to objects
+
+collection- 
+
+* How it different to a list?
+lists don't have scoping
+environments can't have classes
+environments have parents
+
+
+* What's the "default" environment?
+* How can you easily see the contents of an environment?
+
+```{r}
+library(rlang)
+
+e<-env()
+e$a<-1
+e$a
+
+e[[1]] #can't get the first variable in an environment
+
+#enviroments have reference semantics
+
+l<- list(a=1)
+l$l<-1
+str(l)
+#lists won't loop because it will create a new environment
+
+
+```
+
+```{r}
+#how to see what's in an environment
+#can convert environment to a list
+as.list(e)
+str(e)
+
+
+my_sd <- function (x, na.rm = FALSE) {
+  sqrt(var(x, na.rm = na.rm))
+}
+```
+
+```{r}
+
+find_var <- function(name, env) {
+  if (env_has(env, name)) {
+    env_get(env, name)
+  } else {
+    find_var(name, env_parent(env))
+  }
+}
+
+
+#adding a stop message, so it doesn't keep searching endlessly
+
+find_var <- function(name, env) {
+  if (identical(env, empty_env())) {
+    stop("Can't find ", name)
+  } else if (env_has(env, name)) {
+    env_get(env, name)
+  } else {
+    find_var(name, env_parent(env))
+  }
+}
+
+
+find_env <- function(name, env) {
+  if (identical(env, empty_env())) {
+    stop("Can't find ", name)
+  } else if (env_has(env, name)) {
+    env
+  } else {
+    find_env(name, env_parent(env))
+  }
+}
+
+find_env("var", get_env(sd))
+find_env("var", get_env(my_sd))
+
+
+
+```
+
+```{r}
+get_env(ggplot2::geom_point)
+get_env(dplyr::mutate)
+get_env(MASS::select)
+
+env_print(MASS::select)
+env_parent(MASS::select)
+env_parents(MASS::select)
+```
+
+```{r}
+sqrt_env <- get_env(sqrt)
+sqrt_env
+
+env_print(env_parent(my_sd_env))
+env_parent(my_sd_env)$var
+
+lobstr::ref(stats::var, env_parent(my_sd_env)$var)
+
+```
+
+
+```{r}
+# `DESCRIPTION` is all about package level.
+# `NAMESPACE` is at function leve
+
+# to activate a package, the the use_package when you are in your function in the package
+
+##conflicted package
+## this can help when there are commands in many packages that make a conflict, it makes you pick which version you want to use
+
+# good recommendations to use :: so you know what argument comes from what package
+#con is that you can't use a pipe, but you can use @importfrom 
+```
+
