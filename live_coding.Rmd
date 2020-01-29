@@ -7,6 +7,16 @@ output: html_document
 
 
 ```{r}
+# Dependencies
+
+#create_package("~/desktop/cylplot")
+#use_mit_license()
+#use_r("my_sd")
+```
+
+
+
+```{r}
 x <- 1
 f <- function() {
   y <- 2
@@ -136,7 +146,7 @@ lobstr::ref(stats::var, env_parent(my_sd_env)$var)
 # `DESCRIPTION` is all about package level.
 # `NAMESPACE` is at function leve
 
-# to activate a package, the the use_package when you are in your function in the package
+# to activate a package, the the usethis::use_package when you are in your function in the package
 
 ##conflicted package
 ## this can help when there are commands in many packages that make a conflict, it makes you pick which version you want to use
@@ -144,4 +154,262 @@ lobstr::ref(stats::var, env_parent(my_sd_env)$var)
 # good recommendations to use :: so you know what argument comes from what package
 #con is that you can't use a pipe, but you can use @importfrom 
 ```
+
+
+```{r}
+#usethis::create_package(), to create a new package, don't run in the console
+#create_package("~/desktop/cylplot")
+#usethis::use_r(), to create a new code for a function
+#usethis::use_r("cylsum")
+#devtools::load_all(), will load the functions
+#devtools::check(), checks if the package is formatted correctly
+#usethis::use_mit_license(), add in your license with ""
+#devtools::document(), saves the documentation 
+#devtools::install(), installing the packages
+```
+
+1. check() Note
+
+If you refer to a data-variable inside your functions, preface with a '.data', rlang package
+
+*import '.data' from rlang, make sure it is also in the Description
+* Refer to a data variable, 'var': '.data$var'
+
+
+
+```{r}
+bar_plot <- function(var){
+  mtcars +
+    ggplot2::geom_bar(ggplot2::aes(.data$var)) +
+    ggplot2::coord_flip()
+}
+
+# you can also use the [ ] for the user to pass a string
+
+bar_plot <- function(var){
+  mtcars +
+    ggplot2::geom_bar(ggplot2::aes(.data[var])) +
+    ggplot2::coord_flip()
+}
+
+#embracing is the solution, the syntax is to look inside the environment variable x and treat the contents like a data variable
+bar_plot <- function(var){
+  mtcars +
+    ggplot2::geom_bar(ggplot2::aes(.data{{var}})) +
+    ggplot2::coord_flip()
+  
+  #embracing the variables in two places with the {{}}, might want to create two arguments taht will control those groupding variables 
+  
+  hexbin <- function(df, x, y, bins = 10) {
+  df %>% 
+    ggplot2::ggplot(ggplot2::aes({{ x }}, {{ y }})) + 
+    ggplot2::geom_hex(bins = bins)
+}
+hexbin(diamonds, carat, price)
+}
+
+
+#you can all add the ... to take multiple arguments, instead of making groups for each argument
+
+group_summary <- function(df, x, ...) {
+  df %>% 
+    group_by(...) %>% 
+    summarise(
+      n = n(),
+      min = min({{ x }}, na.rm = TRUE),
+      max = max({{ x }}, na.rm = TRUE)
+    )
+}
+group_summary(mtcars, mpg, cyl, gear)
+group_summary(mtcars, mpg, cyl)
+```
+
+```{r}
+#:: affixes every argument in your function 
+#use_package_doc() to create a new file to add the packages being used in the funciton 
+#good place to add the packages that are used by all functions
+# to stash global roxygen commands
+
+#do not edit the namespace file, roxygen will control it 
+#the description is in the control of the user
+```
+
+
+##Interface of the funciton
+*interface= outside of a funciton
+*implementaiton= inside of a function
+
+Tidyverse design guide
+https://design.tidyverse.org
+
+# 9 properties of a function to define its interface
+1.name- naming the functions
+2.arguments 
+- names of the arguments, order as well, putting them in the same name and order if you have it set up
+- default values/ required vs optionals
+-types
+-evaluation (regular, NSE, tidy evaluation)
+3.outputs
+4.conditions
+- errors
+-warnings
+-messages
+5.Side Efffects
+-print to console
+-making a plot
+-io-writing a file
+-change the random seed
+
+
+##Names
+
+1. Functions should be verbs (usually), a doing word
+2. Use prefixes to groupt together related functions
+3. Use suffizes for variations on a theme
+4. Not recommeded to use a "." because many S3 functions use it that are in the base r
+5. An arugment should not generally change the type of the output 
+6. Most important arguments should come first
+7. The data should be the first argument
+8. When calling a function, supply data arguments by position; supply detail arguments by name
+9. If you use '...', the details should come after
+10. Required has no deafult, optional has a default in the description 
+11. Normally the ... is passed unto another function, 
+
+```{r}
+# when you have a character vector, the default is the first one listed
+
+trimws(x, which = c("both", "left", "right"))
+
+#in developer for dplyr check out the group_by (across({{}}))
+
+```
+
+
+## type-stability
+
+A property of a function is that the envariance should be simple
+Thinking about the error messages and how explanatory they are when you are not entering the correct values
+Watch out for functions that return different outputs
+
+
+```{r}
+x<- c(1,2,3,4,5,0,0,0)
+y<-mean((x), na.rm= FALSE, trim= 0)
+y
+```
+
+
+##including data in a package (S3)
+
+S3- simple, oldest system
+S4- more robust but more complicated
+
+#read the chapters in advanced r
+
+```{r}
+sloop::otype(tibble::tibble())
+
+#in base r
+typeof()
+
+#taking a look at name, row.names, levels and class
+attributes()
+
+```
+
+*`print()` looks for the class being inputed and looks for a print for it, it is a generic function
+*methods is a specifric implementaiton of a generic function
+*methods follows a naming convention:
+`{generic}. {class} : t()`
+* create a new S3 class to output a user friendly view
+
+```{r}
+#will tell you on how it found the method
+x<- factor(1:10)
+sloop::s3_dispatch(print(x))
+
+#=> print.factor
+# * print.default
+
+#the one with the arrow is the one that got called
+
+#exactly the code of the print
+sloop::s3_get_method(print.factor)
+
+sloop::s3_get_method(print.table)
+
+sloop::s3_get_method(print.function)
+
+sloop::s3_get_method(print.default)
+
+
+```
+
+```{r}
+#Best practices:
+# https://adv-r.hadley.nz/s3.html#s3-classes
+#  
+```
+
+Much better to create a `bizzaro` generic, then implement methods:
+
+* `create_package("~/desktop/bizzaro")`
+* `use_mit_license()`
+* `use_r("bizarro")`
+
+```{r}
+
+# Is there are to many if, else statements, then it might be better to make all of the circumstances into their own functions 
+
+#' @export
+bizarro <- function(x) {
+  # This uses magic to pass arguments to the right method
+  UseMethod("bizarro")
+}
+#' @export
+bizarro.character <- function(x) {
+  str_reverse(x)
+}
+str_reverse <- function(x) {
+  purrr::map_chr(stringr::str_split(x, ""), 
+    ~ stringr::str_flatten(rev(.x))  
+  )
+}
+```
+
+```{r}
+bizarro.default <- function(x) {
+  stop(
+   "Don't know how to make bizzaro <", 
+   class(x)[[1]], ">", 
+   call. = FALSE 
+  )
+}
+```
+
+```{r}
+#' @export
+bizarro.numeric <- function(x) {
+  -x
+}
+```
+
+```{r}
+#the map is for each column
+#' @export
+bizarro.data.frame <- function(x) {
+  x[] <- purrr::map(x, bizarro)
+  setNames(x, bizarro(names(x)))
+}
+```
+
+
+```{r}
+#will show the method of creating the data
+use_data_raw()
+
+
+```
+
+
 
